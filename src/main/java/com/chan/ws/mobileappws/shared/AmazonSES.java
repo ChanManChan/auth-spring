@@ -45,27 +45,9 @@ public class AmazonSES {
             + "Thank you";
 
     public void verifyEmail(UserDto userDto) {
-        AWSCredentialsProvider credentialsProvider = new AWSCredentialsProvider() {
-            @Override
-            public void refresh() {}
-            @Override
-            public AWSCredentials getCredentials() {
-                return new AWSCredentials() {
-                    @Override
-                    public String getAWSSecretKey() {
-                        return "";
-                    }
-                    @Override
-                    public String getAWSAccessKeyId() {
-                        return "";
-                    }
-                };
-            }
-        };
         AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder
                 .standard()
                 .withRegion(Regions.AP_SOUTH_1)
-                .withCredentials(credentialsProvider)
                 .build();
 
         String htmlBodyWithToken = HTMLBODY.replace("$tokenValue", userDto.getEmailVerificationToken());
@@ -91,28 +73,9 @@ public class AmazonSES {
     public boolean sendPasswordResetRequest(String firstName, String email, String token) {
         boolean returnValue = false;
 
-        AWSCredentialsProvider credentialsProvider = new AWSCredentialsProvider() {
-            @Override
-            public void refresh() {}
-            @Override
-            public AWSCredentials getCredentials() {
-                return new AWSCredentials() {
-                    @Override
-                    public String getAWSSecretKey() {
-                        return "";
-                    }
-                    @Override
-                    public String getAWSAccessKeyId() {
-                        return "";
-                    }
-                };
-            }
-        };
-
         AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder
                 .standard()
                 .withRegion(Regions.AP_SOUTH_1)
-                .withCredentials(credentialsProvider)
                 .build();
 
         String htmlBodyWithToken = PASSWORD_RESET_HTMLBODY.replace("$tokenValue", token);
