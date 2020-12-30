@@ -2,9 +2,12 @@ package com.chan.ws.mobileappws.service.impl;
 
 import com.chan.ws.mobileappws.exceptions.UserServiceException;
 import com.chan.ws.mobileappws.io.entity.PasswordResetTokenEntity;
+import com.chan.ws.mobileappws.io.entity.RoleEntity;
 import com.chan.ws.mobileappws.io.repositories.PasswordResetTokenRepository;
+import com.chan.ws.mobileappws.io.repositories.RoleRepository;
 import com.chan.ws.mobileappws.io.repositories.UserRepository;
 import com.chan.ws.mobileappws.io.entity.UserEntity;
+import com.chan.ws.mobileappws.security.UserPrincipal;
 import com.chan.ws.mobileappws.service.UserService;
 import com.chan.ws.mobileappws.shared.AmazonSES;
 import com.chan.ws.mobileappws.shared.Utils;
@@ -25,6 +28,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -32,12 +37,18 @@ public class  UserServiceImpl implements UserService {
 
     @Autowired
     UserRepository userRepository;
+
     @Autowired
     Utils utils;
+
     @Autowired
     BCryptPasswordEncoder bCryptPasswordEncoder;
+
     @Autowired
     PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
+    RoleRepository roleRepository;
 
     @Override
     public UserDto createUser(UserDto user) {
@@ -63,6 +74,17 @@ public class  UserServiceImpl implements UserService {
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
         userEntity.setEmailVerificationStatus(false);
+
+        // Set Roles
+        Collection<RoleEntity> roleEntities = new HashSet<>();
+        for(String role: user.getRoles()) {
+            RoleEntity roleEntity = roleRepository.findByName(role);
+            if(roleEntity != null) {
+                roleEntities.add(roleEntity);
+            }
+        }
+
+        userEntity.setRoles(roleEntities);
 
         UserEntity storedUserDetails = userRepository.save(userEntity);
         // BeanUtils.copyProperties(storedUserDetails, returnValue);
@@ -221,14 +243,15 @@ public class  UserServiceImpl implements UserService {
         if(userEntity == null) throw new UsernameNotFoundException(email);
 
         // return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(), new ArrayList<>());
-        return new User(
-            userEntity.getEmail(),
-            userEntity.getEncryptedPassword(),
-            userEntity.getEmailVerificationStatus(),
-            true,
-            true,
-            true,
-            new ArrayList<>()
-        );
+        //        return new User(
+        //            userEntity.getEmail(),
+        //            userEntity.getEncryptedPassword(),
+        //            userEntity.getEmailVerificationStatus(),
+        //            true,
+        //            true,
+        //            true,
+        //            new ArrayList<>()
+        //        );
+        return new UserPrincipal(userEntity);
     }
 }

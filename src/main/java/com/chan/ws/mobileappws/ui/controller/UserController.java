@@ -3,6 +3,7 @@ package com.chan.ws.mobileappws.ui.controller;
 import com.chan.ws.mobileappws.exceptions.UserServiceException;
 import com.chan.ws.mobileappws.service.AddressService;
 import com.chan.ws.mobileappws.service.UserService;
+import com.chan.ws.mobileappws.shared.Roles;
 import com.chan.ws.mobileappws.shared.dto.AddressDTO;
 import com.chan.ws.mobileappws.shared.dto.UserDto;
 import com.chan.ws.mobileappws.ui.model.request.PasswordResetModel;
@@ -18,11 +19,15 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 @RestController
@@ -35,6 +40,8 @@ public class UserController {
     @Autowired
     AddressService addressService;
 
+    //    principal object is the currently logged in user
+    @PostAuthorize("hasRole('ADMIN') or returnObject.userId ==  principal.userId") // has access to return object value "UserRest"
     @GetMapping(path = "/{id}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public UserRest getUser(@PathVariable String id) {
         UserRest returnValue = new UserRest();
@@ -66,6 +73,8 @@ public class UserController {
         ModelMapper modelMapper = new ModelMapper();
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
 
+        userDto.setRoles(new HashSet<>(Arrays.asList(Roles.ROLE_USER.name())));
+
         UserDto createdUser = userService.createUser(userDto);
         // BeanUtils.copyProperties(createdUser, returnValue);
         UserRest returnValue = modelMapper.map(createdUser, UserRest.class);
@@ -94,6 +103,8 @@ public class UserController {
             path = "/{id}",
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
     )
+    //    @Secured("ROLE_ADMIN")
+    @PreAuthorize("hasRole('ADMIN') or #id == principal.userId") // currently logged in user ~= principal
     public OperationStatusModel deleteUser(@PathVariable String id) {
         OperationStatusModel returnValue = new OperationStatusModel();
         returnValue.setOperationName(RequestOperationName.DELETE.name());

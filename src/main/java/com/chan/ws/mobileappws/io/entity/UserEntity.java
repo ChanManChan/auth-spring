@@ -2,6 +2,7 @@ package com.chan.ws.mobileappws.io.entity;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 @Entity(name = "users")
@@ -43,6 +44,14 @@ public class UserEntity implements Serializable {
         joinColumns = @JoinColumn(name = "users_id", referencedColumnName = "id"),
         inverseJoinColumns = @JoinColumn(name = "roles_id", referencedColumnName = "id"))
     private Collection<RoleEntity> roles;
+
+    public Collection<RoleEntity> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Collection<RoleEntity> roles) {
+        this.roles = roles;
+    }
 
     public List<AddressEntity> getAddresses() {
         return addresses;

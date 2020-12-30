@@ -1,5 +1,7 @@
 package com.chan.ws.mobileappws.security;
 
+import com.chan.ws.mobileappws.io.entity.UserEntity;
+import com.chan.ws.mobileappws.io.repositories.UserRepository;
 import io.jsonwebtoken.Jwts;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,9 +16,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 // Add this filter to WebSecurity filter chain inside the configure method
+// this is used when the user is performing http request that requires authorization token to be provided
+// eg- when user is performing DELETE we require that authorization token to be provided in the http request
 public class AuthorizationFilter extends BasicAuthenticationFilter {
-    public AuthorizationFilter(AuthenticationManager authManager) {
+    private final UserRepository userRepository;
+    public AuthorizationFilter(AuthenticationManager authManager, UserRepository userRepository) {
         super(authManager);
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -47,7 +53,15 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
                     .getSubject();
 
             if(user != null) {
-                return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
+                UserEntity userEntity = userRepository.findByEmail(user);
+
+                if(userEntity == null) return null;
+
+                UserPrincipal userPrincipal = new UserPrincipal(userEntity);
+                // return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
+                // return new UsernamePasswordAuthenticationToken(user, null, userPrincipal.getAuthorities());
+                // done because of @PreAuthorize("hasRole('ADMIN') or #id == principal.id") in user controller
+                return new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
             }
             return null;
         }

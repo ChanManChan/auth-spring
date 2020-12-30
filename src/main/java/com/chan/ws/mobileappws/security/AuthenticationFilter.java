@@ -51,9 +51,13 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         }
     }
 
+    // right after spring framework receives information from the loadUserByUsername function, it will validate username and password and if the password is correct it will call the successfulAuthentication function
+    // and this function will generate JWT token
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-        String userName = ((User) authResult.getPrincipal()).getUsername();
+    //        String userName = ((User) authResult.getPrincipal()).getUsername();
+
+        String userName = ((UserPrincipal) authResult.getPrincipal()).getUsername();
 
         String token = Jwts.builder()
                 .setSubject(userName)
